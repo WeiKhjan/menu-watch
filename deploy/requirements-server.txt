@@ -1,0 +1,5 @@
+# Installed AFTER CPU-only torch/torchvision (see install.sh), so pip doesn't pull the 2 GB+ CUDA build.
+ultralytics>=8.3
+lap
+flask>=3.0
+gunicorn>=22

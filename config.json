@@ -1,0 +1,15 @@
+{
+  "model": "yolo11n.pt",
+  "confidence": 0.35,
+  "imgsz": 640,
+  "analysis_fps": 10,
+  "min_read_sec": 3.0,
+  "max_still_speed": 0.45,
+  "lost_timeout_sec": 2.0,
+  "min_track_sec": 0.7,
+  "door_exit_window_sec": 1.0,
+  "zones": {
+    "menu_zone": [[0.16, 0.08], [0.40, 0.08], [0.52, 0.72], [0.24, 0.72]],
+    "door_zone": [[0.0, 0.78], [0.40, 0.78], [0.46, 1.0], [0.0, 1.0]]
+  }
+}

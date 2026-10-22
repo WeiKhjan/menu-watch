@@ -1,0 +1,419 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Menu Watch · SuperAgentK</title>
+<link rel="icon" href="static/logo.png">
+<link rel="stylesheet" href="static/theme.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@500;600;700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script>
+  // apply the saved theme before first paint
+  try { const t = localStorage.getItem("mw-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+</script>
+<style>
+  /* hero */
+  .hero { padding: 28px 0 26px; }
+  .eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--brand);
+             padding: 5px 12px; border-radius: 999px; background: var(--glass); border: 1px solid var(--glass-line); backdrop-filter: blur(12px); }
+  .hero h1 { font-size: clamp(30px, 4.4vw, 52px); line-height: 1.06; letter-spacing: -.035em; margin: 16px 0 12px; font-weight: 600; max-width: 900px; }
+  .gradient-text { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent; }
+  .hero p.lede { color: var(--ink-soft); font-size: 17px; margin: 0 0 22px; max-width: 680px; }
+  .toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  /* grid & cards */
+  .grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 20px; padding-bottom: 48px; }
+  .c-7 { grid-column: span 7; } .c-5 { grid-column: span 5; } .c-4 { grid-column: span 4; } .c-8 { grid-column: span 8; } .c-12 { grid-column: span 12; }
+  @media (max-width: 1060px) { .c-7, .c-5, .c-4, .c-8 { grid-column: span 12; } }
+  .card-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+  .card h2 { font-size: 17px; font-weight: 600; letter-spacing: -.01em; margin: 0; }
+  .card .sub { color: var(--ink-mute); font-size: 13px; }
+
+  /* video */
+  .video img { width: 100%; display: block; border-radius: 14px; background: #000; aspect-ratio: 16/9; object-fit: contain; }
+  .seg { display: inline-flex; padding: 3px; border-radius: 999px; background: var(--tile); margin-left: auto; }
+  .seg button { font: 600 12.5px var(--font-body); padding: 5px 12px; border: 0; border-radius: 999px; background: transparent; color: var(--ink-soft); cursor: pointer; font-variant-numeric: tabular-nums; }
+  .seg button.on { background: var(--card); color: var(--ink); box-shadow: 0 1px 3px #0000001f; }
+  .pos { color: var(--ink-mute); font-size: 13px; font-variant-numeric: tabular-nums; }
+  .legend-row { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 12px; color: var(--ink-mute); font-size: 13px; }
+  .legend-row i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; border: 2px solid; }
+  .warn { margin: 0 0 10px; font-size: 13px; color: var(--warn); background: var(--warn-soft); padding: 8px 12px; border-radius: 12px; }
+
+  /* KPIs */
+  .kpi-col { display: flex; flex-direction: column; gap: 20px; }
+  .hero-kpi { position: relative; overflow: hidden; }
+  .hero-kpi::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 4px; background: var(--grad); }
+  .hero-kpi .label { display: flex; align-items: center; gap: 8px; color: var(--ink-soft); font-weight: 500; }
+  .hero-kpi .big { font-size: 64px; line-height: 1; font-weight: 700; letter-spacing: -.04em; margin: 12px 0 6px; font-variant-numeric: tabular-nums; }
+  .hero-kpi .note { color: var(--ink-mute); font-size: 14px; }
+  .hero-kpi .note b { color: var(--ink); font-weight: 600; }
+  .sw { display: inline-block; width: 10px; height: 10px; border-radius: 3px; flex: none; }
+  .tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  @media (max-width: 520px) { .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .tile { background: var(--tile); border-radius: 16px; padding: 12px 14px; }
+  .tile .label { display: flex; align-items: center; gap: 6px; color: var(--ink-soft); font-size: 13px; }
+  .tile .num { font-size: 28px; font-weight: 600; letter-spacing: -.02em; font-variant-numeric: tabular-nums; line-height: 1.2; margin-top: 4px; }
+  .tile .hint { color: var(--ink-mute); font-size: 12px; }
+
+  /* funnel */
+  .funnel { display: flex; flex-direction: column; gap: 16px; }
+  .step .row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 6px; }
+  .step .name { color: var(--ink-soft); font-size: 14px; }
+  .step .val { font-family: var(--font-display); font-weight: 600; font-size: 20px; font-variant-numeric: tabular-nums; }
+  .step .pct { color: var(--ink-mute); font-size: 12.5px; margin-left: 6px; font-family: var(--font-body); font-weight: 500; }
+  .bar { height: 12px; border-radius: 999px; background: var(--tile); overflow: hidden; }
+  .bar > span { display: block; height: 100%; border-radius: 999px; background: var(--grad); min-width: 4px; transition: width .4s; }
+  .split { display: flex; height: 14px; border-radius: 999px; overflow: hidden; gap: 2px; background: var(--card); }
+  .split span { display: block; height: 100%; transition: flex-grow .4s; }
+  .split.none span { background: var(--tile) !important; }
+  .split-legend { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; color: var(--ink-soft); margin-top: 8px; }
+  .split-legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .divider { height: 1px; background: var(--line); margin: 4px 0; }
+  .insight { display: flex; gap: 10px; align-items: flex-start; background: var(--accent-soft); color: var(--ink); border-radius: 14px; padding: 12px 14px; font-size: 14px; }
+  .insight svg { flex: none; color: var(--accent); margin-top: 2px; }
+
+  /* charts */
+  .chart-card { display: flex; flex-direction: column; }
+  .chart-wrap { position: relative; flex: 1; min-height: 280px; }
+
+  /* table */
+  .scroll { max-height: 380px; overflow: auto; margin: 0 -6px; }
+  table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 14px; }
+  th, td { text-align: left; padding: 9px 6px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  th { color: var(--ink-mute); font-weight: 500; font-size: 12.5px; position: sticky; top: 0; background: var(--card); }
+  tr:last-child td { border-bottom: 0; }
+  .tag { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 500;
+         background: color-mix(in srgb, var(--c, var(--ink-mute)) 13%, transparent); color: var(--ink); }
+  .tag::before { content: ""; width: 7px; height: 7px; border-radius: 2px; background: var(--c, var(--ink-mute)); }
+  .empty { color: var(--ink-mute); padding: 24px 0; text-align: center; }
+  footer { color: var(--ink-mute); font-size: 13px; padding: 0 0 32px; text-align: center; }
+  footer a { color: var(--brand); text-decoration: none; }
+  @media (prefers-reduced-motion: reduce) { .status.running .dot { animation: none; } .bar > span, .split span { transition: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav>
+    <a class="brand" href="./"><img src="static/logo.png" alt="">SuperAgentK <span class="prod">/ Menu Watch</span></a>
+    <span class="spacer"></span>
+    <span class="status" id="status"><span class="dot"></span><span id="state">Connecting…</span></span>
+    <button class="icon-btn" id="theme" type="button" aria-label="Toggle light and dark theme" title="Toggle theme">
+      <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+    </button>
+  </nav>
+
+  <header class="hero">
+    <span class="eyebrow">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M23 7 16 12l7 5V7Z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+      AI Employee · door camera <b>{{ camera_id }}</b>
+    </span>
+    <h1>See who reads your menu, <span class="gradient-text">and who walks away.</span></h1>
+    <p class="lede">Menu Watch watches the camera at your outlet's door, counts everyone who stops to read the menu, and records whether they came in.</p>
+    <div class="toolbar">
+      <select id="day" aria-label="Day"></select>
+      <a class="btn btn-primary" id="csv" href="api/export.csv">Export CSV</a>
+      <a class="btn" href="zones">Edit zones</a>
+      <button class="btn" id="clear" type="button">Clear day</button>
+      <span class="chip" id="sample" hidden title="Generated by seed_demo.py so the dashboard has history. Remove it with: python seed_demo.py --remove"></span>
+    </div>
+  </header>
+
+  <main class="grid">
+    <section class="card video c-7">
+      <div class="card-head">
+        <h2>Live camera</h2>
+        <span class="pos" id="pos"></span>
+        <div class="seg" id="speed" hidden title="Fast-forward (video files only). Higher speeds analyse fewer frames per video second, so tracking gets less accurate.">
+          <button data-s="1">1×</button><button data-s="2">2×</button><button data-s="4">4×</button><button data-s="8">8×</button>
+        </div>
+      </div>
+      <p class="warn" id="speedwarn" hidden></p>
+      <img src="video_feed" alt="Live annotated camera feed">
+      <div class="legend-row">
+        <span><i style="border-color:#ffd700"></i>Looking at the menu</span>
+        <span><i style="border-color:#ff8c00"></i>Menu reader (≥ <span id="minread">3</span>s)</span>
+        <span><i style="border-color:#aaaaaa"></i>Leaving the shop</span>
+        <span><i style="border-color:#3cc850"></i>Door zone</span>
+      </div>
+    </section>
+
+    <section class="kpi-col c-5">
+      <div class="card hero-kpi">
+        <div class="label"><span class="sw" style="background:var(--s-left)"></span><span><span id="kpi-title">Today</span> · read the menu and walked away</span></div>
+        <div class="big" id="k-left">–</div>
+        <div class="note" id="k-left-note">&nbsp;</div>
+      </div>
+      <div class="card">
+        <div class="tiles">
+          <div class="tile"><div class="label">Walked past</div><div class="num" id="k-outside">–</div><div class="hint">people outside</div></div>
+          <div class="tile"><div class="label">Read the menu</div><div class="num" id="k-readers">–</div><div class="hint">stopped ≥ <span class="minread">3</span>s</div></div>
+          <div class="tile"><div class="label"><span class="sw" style="background:var(--s-entered)"></span>Read &amp; came in</div><div class="num" id="k-entered">–</div><div class="hint">menu converted them</div></div>
+          <div class="tile"><div class="label">Menu conversion</div><div class="num" id="k-conv">–</div><div class="hint">came in ÷ read</div></div>
+          <div class="tile"><div class="label">Avg reading time</div><div class="num" id="k-avg">–</div><div class="hint">per menu reader</div></div>
+          <div class="tile"><div class="label"><span class="sw" style="background:var(--s-walkin)"></span>Walk-ins</div><div class="num" id="k-walkin">–</div><div class="hint">came in, no menu</div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card c-4">
+      <div class="card-head"><h2>Menu funnel</h2></div>
+      <div class="funnel">
+        <div class="step"><div class="row"><span class="name">Walked past the door</span><span class="val" id="f-outside">–</span></div><div class="bar"><span id="fb-outside" style="width:100%"></span></div></div>
+        <div class="step"><div class="row"><span class="name">Stopped to read the menu</span><span class="val"><span id="f-readers">–</span><span class="pct" id="fp-readers"></span></span></div><div class="bar"><span id="fb-readers" style="width:0"></span></div></div>
+        <div class="step"><div class="row"><span class="name">Came in after reading</span><span class="val"><span id="f-entered">–</span><span class="pct" id="fp-entered"></span></span></div><div class="bar"><span id="fb-entered" style="width:0"></span></div></div>
+        <div class="divider"></div>
+        <div>
+          <div class="step"><div class="row"><span class="name">Of the people who read the menu</span></div></div>
+          <div class="split" role="img" id="split" aria-label="Share of menu readers who came in vs walked away">
+            <span id="sp-in" style="background:var(--s-entered);flex-grow:1"></span><span id="sp-out" style="background:var(--s-left);flex-grow:1"></span>
+          </div>
+          <div class="split-legend"><span><i class="sw" style="background:var(--s-entered)"></i><span id="sp-in-l">came in</span></span><span><i class="sw" style="background:var(--s-left)"></i><span id="sp-out-l">walked away</span></span></div>
+        </div>
+        <div class="insight" id="insight" hidden>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.3h6c0-1 .4-1.8 1-2.3A7 7 0 0 0 12 2Z"/></svg>
+          <span id="insight-text"></span>
+        </div>
+      </div>
+    </section>
+
+    <section class="card chart-card c-8">
+      <div class="card-head"><h2>Menu readers by hour</h2><span class="sub" id="hour-sub"></span></div>
+      <div class="chart-wrap"><canvas id="hourly" role="img" aria-label="Hourly stacked bars: menu readers who came in, who walked away, and walk-ins"></canvas></div>
+    </section>
+
+    <section class="card chart-card c-8">
+      <div class="card-head"><h2>Last 14 days</h2><span class="sub">Menu readers per day · click a day to open it</span></div>
+      <div class="chart-wrap"><canvas id="trend" role="img" aria-label="Daily stacked bars of menu readers who came in vs walked away over 14 days"></canvas></div>
+    </section>
+
+    <section class="card c-4">
+      <div class="card-head"><h2>Latest events</h2></div>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Time</th><th>Person</th><th>At menu</th><th>Outcome</th></tr></thead>
+          <tbody id="events"></tbody>
+        </table>
+        <div class="empty" id="no-events">No menu readers or walk-ins recorded yet.</div>
+      </div>
+    </section>
+  </main>
+  <footer>Menu Watch by <a href="https://www.superagentk.com" target="_blank" rel="noopener">SuperAgentK</a> · counts anonymous tracks only, no faces or images are stored</footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+const OUT = {
+  read_left:    { label: "Read & walked away",  color: "--s-left" },
+  read_entered: { label: "Read & came in",      color: "--s-entered" },
+  walked_in:    { label: "Walk-in (no menu)",   color: "--s-walkin" },
+  exited_shop:  { label: "Came out of shop",    color: "--ink-mute" },
+};
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const $ = id => document.getElementById(id);
+const fmt = n => n.toLocaleString("en");
+const pct = (a, b) => b ? Math.round(100 * a / b) : 0;
+const today = () => new Date().toLocaleDateString("en-CA");
+let hourly, trend, selectedDay = null, last = null;
+
+// ---------------------------------------------------------------- theme
+$("theme").onclick = () => {
+  const dark = document.documentElement.dataset.theme
+    ? document.documentElement.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  document.documentElement.dataset.theme = dark ? "light" : "dark";
+  try { localStorage.setItem("mw-theme", document.documentElement.dataset.theme); } catch (e) {}
+  paintCharts();
+};
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", paintCharts);
+
+// ---------------------------------------------------------------- charts
+function alpha(hex, a) {
+  const n = parseInt(hex.slice(1), 16);
+  return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`;
+}
+function baseOptions() {
+  return {
+    maintainAspectRatio: false, animation: false,
+    interaction: { mode: "index", intersect: false },
+    plugins: {
+      colors: { enabled: false },
+      legend: { position: "top", align: "end", labels: { boxWidth: 10, boxHeight: 10, useBorderRadius: true, borderRadius: 3, padding: 14 } },
+      tooltip: { padding: 12, cornerRadius: 12, boxPadding: 4, usePointStyle: true,
+                 callbacks: { footer: items => "Total: " + items.reduce((s, i) => s + i.parsed.y, 0) } },
+    },
+    scales: {
+      x: { stacked: true, grid: { display: false }, border: { display: false }, ticks: { maxRotation: 0, autoSkip: true } },
+      y: { stacked: true, beginAtZero: true, border: { display: false }, ticks: { precision: 0, maxTicksLimit: 6 } },
+    },
+  };
+}
+function dataset(key) {
+  // colours are scriptable so they follow the theme and the selected day on every update
+  const color = c => {
+    const col = css(OUT[key].color), d = c.chart === trend && last && last.trend[c.dataIndex];
+    return d && d.day !== last.day ? alpha(col, .45) : col;
+  };
+  return { key, label: OUT[key].label, data: [], borderRadius: 4, borderSkipped: "start",
+           backgroundColor: color, hoverBackgroundColor: c => css(OUT[key].color), borderColor: () => css("--card"),
+           borderWidth: { top: 2 }, maxBarThickness: 28, pointStyle: "rectRounded" };
+}
+function buildCharts() {
+  if (!window.Chart) return;
+  Chart.defaults.font.family = '"Instrument Sans", ui-sans-serif, system-ui, sans-serif';
+  Chart.defaults.font.size = 12;
+  hourly = new Chart($("hourly"), { type: "bar",
+    data: { labels: [], datasets: ["read_entered", "read_left", "walked_in"].map(dataset) }, options: baseOptions() });
+  const topts = baseOptions();
+  topts.onClick = (e, els) => {
+    if (!els.length || !last) return;
+    selectedDay = last.trend[els[0].index].day;
+    $("day").value = selectedDay;
+    refresh();
+  };
+  topts.onHover = (e, els) => { e.native.target.style.cursor = els.length ? "pointer" : "default"; };
+  trend = new Chart($("trend"), { type: "bar",
+    data: { labels: [], datasets: ["read_entered", "read_left"].map(dataset) }, options: topts });
+  paintCharts();
+}
+function paintCharts() {
+  for (const ch of [hourly, trend]) {
+    if (!ch) continue;
+    const o = ch.options;
+    o.plugins.legend.labels.color = css("--ink-soft");
+    o.scales.x.ticks.color = o.scales.y.ticks.color = css("--ink-mute");
+    o.scales.y.grid.color = css("--line");
+    Object.assign(o.plugins.tooltip, { backgroundColor: css("--card"), titleColor: css("--ink"), bodyColor: css("--ink-soft"),
+      footerColor: css("--ink"), borderColor: css("--line-strong"), borderWidth: 1 });
+    ch.update();
+  }
+}
+
+// ---------------------------------------------------------------- data
+function fmtDur(s) { s = Math.floor(s); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = String(s % 60).padStart(2, "0");
+  return h ? `${h}:${String(m).padStart(2, "0")}:${x}` : `${m}:${x}`; }
+const hh = h => String(h).padStart(2, "0") + ":00";
+
+document.querySelectorAll("#speed button").forEach(b => b.onclick = async () => {
+  await fetch("api/speed", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ speed: +b.dataset.s }) });
+  refresh();
+});
+
+function renderStatus(st) {
+  const label = { running: "Live", paused: "Paused", starting: "Starting", finished: "Finished", error: "Error" }[st.state] || st.state;
+  $("state").textContent = label + (st.state === "running" ? ` · ${st.fps} fps · ${st.active_people} in view` : "") + (st.error ? ` · ${st.error}` : "");
+  $("status").className = "status " + st.state;
+  $("speed").hidden = !st.is_file;
+  document.querySelectorAll("#speed button").forEach(b => b.classList.toggle("on", +b.dataset.s === st.speed));
+  $("pos").textContent = st.is_file && st.duration_sec ? `${fmtDur(st.position_sec)} / ${fmtDur(st.duration_sec)}` : "";
+  // each analysed frame should cover <= 0.5s of video, otherwise people jump too far between frames to track
+  const gap = st.fps ? st.speed / st.fps : 0;
+  $("speedwarn").hidden = !(st.is_file && st.speed > 1 && gap > 0.5);
+  $("speedwarn").textContent = `Too fast for this computer: checking 1 frame every ${gap.toFixed(1)}s of video, so counts may be off. Try a lower speed.`;
+}
+
+function renderKpis(r, isToday) {
+  const t = r.totals, outside = t.passed_by + t.read_left + t.read_entered + t.walked_in;
+  $("kpi-title").textContent = isToday ? "Today" : new Date(r.day + "T12:00").toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+  $("k-left").textContent = fmt(t.read_left);
+  $("k-left-note").innerHTML = r.menu_readers
+    ? `<b>${pct(t.read_left, r.menu_readers)}%</b> of the ${fmt(r.menu_readers)} people who read the menu didn't come in`
+    : "Nobody has stopped at the menu yet";
+  $("k-outside").textContent = fmt(outside);
+  $("k-readers").textContent = fmt(r.menu_readers);
+  $("k-entered").textContent = fmt(t.read_entered);
+  $("k-conv").textContent = r.conversion_pct == null ? "–" : Math.round(r.conversion_pct) + "%";
+  $("k-avg").textContent = r.avg_read_sec == null ? "–" : r.avg_read_sec + "s";
+  $("k-walkin").textContent = fmt(t.walked_in);
+  document.querySelectorAll(".minread, #minread").forEach(e => e.textContent = r.min_read_sec);
+
+  // funnel: bar widths are honest shares of everyone who walked past
+  $("f-outside").textContent = fmt(outside);
+  $("f-readers").textContent = fmt(r.menu_readers);
+  $("fp-readers").textContent = outside ? pct(r.menu_readers, outside) + "% of passers-by" : "";
+  $("f-entered").textContent = fmt(t.read_entered);
+  $("fp-entered").textContent = r.menu_readers ? pct(t.read_entered, r.menu_readers) + "% of readers" : "";
+  $("fb-readers").style.width = (outside ? 100 * r.menu_readers / outside : 0) + "%";
+  $("fb-entered").style.width = (outside ? 100 * t.read_entered / outside : 0) + "%";
+  $("split").classList.toggle("none", !r.menu_readers);
+  $("sp-in").style.flexGrow = r.menu_readers ? t.read_entered : 1;
+  $("sp-out").style.flexGrow = r.menu_readers ? t.read_left : 1;
+  $("sp-in-l").textContent = `${pct(t.read_entered, r.menu_readers)}% came in`;
+  $("sp-out-l").textContent = `${pct(t.read_left, r.menu_readers)}% walked away`;
+
+  const peak = r.hourly.reduce((a, h) => h.read_left > a.read_left ? h : a, r.hourly[0]);
+  $("insight").hidden = !peak.read_left;
+  $("insight-text").innerHTML = `Most walk-aways at <b>${hh(peak.hour)}–${hh(peak.hour + 1)}</b>: ${peak.read_left} people read the menu and left. A staff greeting or promo board at that hour could win some back.`;
+}
+
+function renderCharts(r) {
+  if (!hourly) return;
+  // show opening hours, widened to any hour that has data
+  const used = r.hourly.filter(h => h.read_left + h.read_entered + h.walked_in + h.passed_by).map(h => h.hour);
+  const from = Math.min(8, ...used), to = Math.max(22, ...used);
+  const rows = r.hourly.slice(from, to + 1);
+  hourly.data.labels = rows.map(h => hh(h.hour));
+  hourly.data.datasets.forEach(ds => ds.data = rows.map(h => h[ds.key]));
+  $("hour-sub").textContent = `${hh(from)}–${hh(to + 1)}`;
+
+  trend.data.labels = r.trend.map(d => new Date(d.day + "T12:00").toLocaleDateString("en-GB", { weekday: "short", day: "numeric" }));
+  trend.data.datasets.forEach(ds => ds.data = r.trend.map(d => d[ds.key]));
+  paintCharts();
+}
+
+function renderEvents(r) {
+  $("events").innerHTML = r.recent.map(e => `<tr>
+      <td>${e.first_seen.slice(11, 16)}</td><td>#${e.track_id}</td><td>${e.menu_dwell_sec ? e.menu_dwell_sec.toFixed(1) + "s" : "–"}</td>
+      <td><span class="tag" style="--c:var(${OUT[e.outcome].color})">${OUT[e.outcome].label}</span></td></tr>`).join("");
+  $("no-events").style.display = r.recent.length ? "none" : "block";
+}
+
+async function refresh() {
+  const now = today(), day = selectedDay || now;
+  const r = await fetch("api/stats?day=" + day).then(r => r.json()).catch(() => null);
+  if (!r) return;
+  last = r;
+  renderStatus(r.status);
+  renderKpis(r, day === now);
+  renderCharts(r);
+  renderEvents(r);
+  $("csv").href = "api/export.csv?day=" + day;
+  $("sample").hidden = !r.seeded;
+  $("sample").textContent = `Includes ${fmt(r.seeded)} sample records`;
+
+  // today and the day being viewed are always in the list, even before they have records
+  const sel = $("day"), days = [...new Set([now, day, ...r.days])].sort().reverse();
+  if ([...sel.options].map(o => o.value).join() !== days.join()) {
+    sel.innerHTML = days.map(d => `<option value="${d}">${d === now ? "Today" : new Date(d + "T12:00").toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" })}</option>`).join("");
+  }
+  sel.value = day;
+}
+
+$("day").addEventListener("change", e => { selectedDay = e.target.value; refresh(); });
+
+// two-click confirm (no browser pop-up): first click arms the button for 4s, second click deletes
+let clearTimer = null;
+$("clear").addEventListener("click", async () => {
+  const btn = $("clear"), day = $("day").value;
+  if (!btn.classList.contains("armed")) {
+    btn.classList.add("armed");
+    btn.textContent = "Delete this day? Click again";
+    clearTimer = setTimeout(() => { btn.classList.remove("armed"); btn.textContent = "Clear day"; }, 4000);
+    return;
+  }
+  clearTimeout(clearTimer);
+  const r = await fetch("api/clear", { method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ day }) }).then(r => r.json());
+  btn.classList.remove("armed");
+  btn.textContent = `Cleared ${fmt(r.deleted)} records`;
+  setTimeout(() => btn.textContent = "Clear day", 2500);
+  $("day").innerHTML = "";  // rebuild the day list; a cleared past day disappears, so go back to today
+  selectedDay = null;
+  refresh();
+});
+buildCharts();
+refresh();
+setInterval(refresh, 2000);
+</script>
+</body>
+</html>

@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zone Editor · Menu Watch</title>
+<link rel="icon" href="static/logo.png">
+<link rel="stylesheet" href="static/theme.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@500;600;700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script>
+  try { const t = localStorage.getItem("mw-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+</script>
+<style>
+  :root { --menu: #ffd700; --door: #3cc850; }
+  h1 { font-size: clamp(26px, 3.4vw, 40px); letter-spacing: -.03em; line-height: 1.1; font-weight: 600; margin: 20px 0 10px; }
+  .lede { color: var(--ink-soft); margin: 0 0 22px; max-width: 760px; font-size: 16px; }
+  .toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 16px; }
+  .zone-btn { display: inline-flex; align-items: center; gap: 8px; }
+  .zone-btn i { width: 10px; height: 10px; border-radius: 3px; }
+  .zone-btn.on { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+  label.field { display: inline-flex; align-items: center; gap: 8px; color: var(--ink-soft); font-size: 14px; }
+  input[type=number] { font: 500 14px var(--font-body); width: 72px; padding: 8px 12px; border-radius: 999px; color: var(--ink);
+                       background: var(--glass); border: 1px solid var(--glass-line); }
+  .stage { position: relative; border-radius: 14px; overflow: hidden; background: #000; }
+  .stage img { display: block; width: 100%; }
+  .stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; cursor: crosshair; }
+  #msg { color: var(--live); font-weight: 500; font-size: 14px; }
+  .back { color: var(--ink-soft); text-decoration: none; font-size: 14px; }
+  .back:hover { color: var(--ink); }
+  .wrap { padding-bottom: 40px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav>
+    <a class="brand" href="./"><img src="static/logo.png" alt="">SuperAgentK <span class="prod">/ Menu Watch</span></a>
+    <span class="spacer"></span>
+    <a class="back" href="./">← Back to dashboard</a>
+  </nav>
+
+  <h1>Draw the <span class="gradient-text">menu and door zones</span></h1>
+  <p class="lede">Pick a zone, then click on the image to outline where people's <b>feet</b> stand. <b>Menu zone</b> is the pavement right in front of your menu board or window.
+     <b>Door</b> is the doorway area people step into when they come in. Changes apply as soon as you save.</p>
+
+  <div class="card">
+    <div class="toolbar">
+      <button class="btn zone-btn on" data-zone="menu_zone"><i style="background:var(--menu)"></i>Menu zone</button>
+      <button class="btn zone-btn" data-zone="door_zone"><i style="background:var(--door)"></i>Door</button>
+      <button class="btn" id="undo">Undo point</button>
+      <button class="btn" id="clear">Clear zone</button>
+      <label class="field">Count as "read" after <input id="minread" type="number" min="1" step="0.5"> s</label>
+      <span class="spacer"></span>
+      <span id="msg"></span>
+      <button class="btn btn-primary" id="save">Save zones</button>
+    </div>
+    <div class="stage">
+      <img id="img" src="snapshot.jpg" alt="Camera snapshot">
+      <canvas id="cv"></canvas>
+    </div>
+  </div>
+</div>
+<script>
+const img = document.getElementById("img"), cv = document.getElementById("cv"), ctx = cv.getContext("2d");
+let cfg, zone = "menu_zone";
+const color = z => getComputedStyle(document.documentElement).getPropertyValue(z === "menu_zone" ? "--menu" : "--door").trim();
+
+function draw() {
+  cv.width = img.naturalWidth || 1280; cv.height = img.naturalHeight || 720;
+  ctx.clearRect(0, 0, cv.width, cv.height);
+  for (const z of ["menu_zone", "door_zone"]) {
+    const pts = cfg.zones[z] || [];
+    if (!pts.length) continue;
+    ctx.beginPath();
+    pts.forEach(([x, y], i) => (i ? ctx.lineTo : ctx.moveTo).call(ctx, x * cv.width, y * cv.height));
+    ctx.closePath();
+    ctx.fillStyle = color(z) + "40"; ctx.fill();
+    ctx.lineWidth = z === zone ? 4 : 2; ctx.strokeStyle = color(z); ctx.stroke();
+    pts.forEach(([x, y]) => { ctx.beginPath(); ctx.arc(x * cv.width, y * cv.height, 6, 0, 7); ctx.fillStyle = color(z); ctx.fill(); });
+  }
+}
+cv.addEventListener("click", e => {
+  const r = cv.getBoundingClientRect();
+  (cfg.zones[zone] ||= []).push([(e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height]);
+  draw();
+});
+document.querySelectorAll("[data-zone]").forEach(b => b.onclick = () => {
+  zone = b.dataset.zone;
+  document.querySelectorAll("[data-zone]").forEach(x => x.classList.toggle("on", x === b));
+  draw();
+});
+document.getElementById("undo").onclick = () => { (cfg.zones[zone] || []).pop(); draw(); };
+document.getElementById("clear").onclick = () => { cfg.zones[zone] = []; draw(); };
+document.getElementById("save").onclick = async () => {
+  const r = await fetch("api/config", { method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ zones: cfg.zones, min_read_sec: document.getElementById("minread").value }) });
+  document.getElementById("msg").textContent = r.ok ? "Saved ✓" : "Save failed";
+};
+img.onerror = () => setTimeout(() => img.src = "snapshot.jpg?" + Date.now(), 1500);
+fetch("api/config").then(r => r.json()).then(c => {
+  cfg = c; document.getElementById("minread").value = c.min_read_sec;
+  img.complete ? draw() : img.onload = draw;
+});
+</script>
+</body>
+</html>
